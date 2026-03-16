@@ -13,6 +13,13 @@ export interface Product {
   "EAN": string;
 }
 
+export interface MappingConfig {
+  stockRanges: { min: number; max: number; status: string }[];
+  stockStatusToValue: Record<string, number>;
+  currencyMap: Record<string, string>;
+  colorMap: Record<string, string>;
+}
+
 export interface CleanedProduct extends Product {
   cleanedDimensions: string;
   cleanedColor: string;
@@ -29,8 +36,17 @@ export interface CleanedProduct extends Product {
 /**
  * Normalizes color codes to full market names.
  */
-function normalizeColor(name: string): string {
+function normalizeColor(name: string, config?: MappingConfig): string {
   const n = name.toLowerCase();
+
+  // Use user-defined mapping if available
+  if (config?.colorMap) {
+    for (const [alias, fullName] of Object.entries(config.colorMap)) {
+      if (n.includes(alias.toLowerCase())) return fullName;
+    }
+  }
+
+  // Default mappings
   if (n.includes("j. szary") || n.includes("jasnoszary")) return "Jasnoszary";
   if (
     n.includes("c. szary") || n.includes("ciemnoszary") || n.includes("c_szary")
@@ -108,40 +124,64 @@ function cleanDescription(desc: string): string {
 /**
  * Maps stock values.
  */
-function mapStock(stany: string | number): { count: number; status: string } {
+function mapStock(stany: string | number, config?: MappingConfig): { count: number; status: string } {
+  let count = 0;
+  let status = "Nieznany";
+
   if (typeof stany === "number") {
-    return {
-      count: stany,
-      status: stany > 10 ? "Wysoki" : stany > 0 ? "Niski" : "Brak",
-    };
+    count = stany;
+  } else {
+    const s = stany.toLowerCase();
+    // Check status to value map
+    if (config?.stockStatusToValue && config.stockStatusToValue[s] !== undefined) {
+      count = config.stockStatusToValue[s];
+    } else {
+      const parsed = parseInt(s.replace(/[^\d]/g, ""));
+      count = !isNaN(parsed) ? parsed : 0;
+    }
   }
 
-  const s = stany.toLowerCase();
-  if (s === "dużo") return { count: 50, status: "Wysoki" };
-  if (s === "średnio") return { count: 15, status: "Średni" };
-  if (s === "mało") return { count: 5, status: "Niski" };
-  if (s === "brak" || s === "0") return { count: 0, status: "Brak" };
-
-  const parsed = parseInt(s.replace(/[^\d]/g, ""));
-  if (!isNaN(parsed)) {
-    return mapStock(parsed);
+  // Determine status from ranges
+  if (config?.stockRanges) {
+    for (const range of config.stockRanges) {
+      if (count >= range.min && count <= range.max) {
+        status = range.status;
+        break;
+      }
+    }
+  } else {
+    // Default fallback
+    status = count > 10 ? "Wysoki" : count > 0 ? "Niski" : "Brak";
   }
 
-  return { count: 0, status: "Nieznany" };
+  return { count, status };
 }
 
 /**
  * Normalizes price and currency.
  */
-function normalizePrice(priceStr: string): { price: number; currency: string } {
-  if (!priceStr) return { price: 0, currency: "PLN" };
+function normalizePrice(priceStr: string, config?: MappingConfig): { price: number; currency: string } {
+  if (!priceStr) {
+    return {
+      price: 0,
+      currency: config?.currencyMap?.[""] || "PLN"
+    };
+  }
 
   const cleanPrice = priceStr.replace(",", ".").replace(/[^\d.]/g, "");
   const price = parseFloat(cleanPrice) || 0;
 
-  let currency = "PLN";
+  let currency = "";
   if (priceStr.toUpperCase().includes("EUR")) currency = "EUR";
-  if (priceStr.toUpperCase().includes("USD")) currency = "USD";
+  else if (priceStr.toUpperCase().includes("USD")) currency = "USD";
+  else if (priceStr.toUpperCase().includes("PLN")) currency = "PLN";
+
+  // Map currency if defined
+  if (config?.currencyMap && config.currencyMap[currency] !== undefined) {
+    currency = config.currencyMap[currency];
+  } else if (!currency) {
+    currency = config?.currencyMap?.[""] || "PLN";
+  }
 
   return { price, currency };
 }
@@ -177,14 +217,14 @@ function generateAllegroTitle(
 /**
  * Processes a single product entry.
  */
-export function processProduct(p: Product): CleanedProduct {
-  const cleanedColor = normalizeColor(p["NAZWA ORG"]);
+export function processProduct(p: Product, config?: MappingConfig): CleanedProduct {
+  const cleanedColor = normalizeColor(p["NAZWA ORG"], config);
   const cleanedDimensions = normalizeDimensions(p["NAZWA ORG"], p["Opis ofe"]);
   const cleanedDescription = cleanDescription(p["Opis ofe"]);
   const allegroTitle = generateAllegroTitle(p["NAZWA ORG"], cleanedColor, cleanedDimensions);
 
-  const { count, status } = mapStock(p.Stany);
-  const { price, currency } = normalizePrice(p.Cena);
+  const { count, status } = mapStock(p.Stany, config);
+  const { price, currency } = normalizePrice(p.Cena, config);
 
   return {
     ...p,
@@ -204,6 +244,6 @@ export function processProduct(p: Product): CleanedProduct {
 /**
  * Processes a batch of products.
  */
-export function processBatch(data: Product[]): CleanedProduct[] {
-  return data.map(processProduct);
+export function processBatch(data: Product[], config?: MappingConfig): CleanedProduct[] {
+  return data.map(p => processProduct(p, config));
 }
