@@ -213,10 +213,10 @@ export default function MarketplaceDashboard(
       {/* Header */}
       <header class="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div class="space-y-1">
-          <h1 class="text-4xl font-black tracking-tighter">
+          <h1 class="text-3xl font-bold tracking-tight">
             Marketplace Fixer
           </h1>
-          <p class="text-muted-foreground font-medium">
+          <p class="text-muted-foreground text-sm">
             Ujednolicaj i optymalizuj dane produktowe do obróbki.
           </p>
         </div>
@@ -314,9 +314,9 @@ export default function MarketplaceDashboard(
                     <Input
                       type="number"
                       value={value}
-                      onInput={(e) => setMappingConfig({
+                      onChange={(e) => setMappingConfig({
                         ...mappingConfig,
-                        stockStatusToValue: { ...mappingConfig.stockStatusToValue, [status]: parseInt(e.currentTarget.value) || 0 }
+                        stockStatusToValue: { ...mappingConfig.stockStatusToValue, [status]: parseInt((e.target as HTMLInputElement).value) || 0 }
                       })}
                       class="h-7 w-16 text-xs text-right bg-background font-black border-none focus-visible:ring-1"
                     />
@@ -330,9 +330,9 @@ export default function MarketplaceDashboard(
                       <Input
                         type="number"
                         value={range.min}
-                        onInput={(e) => {
+                        onChange={(e) => {
                           const newRanges = [...mappingConfig.stockRanges];
-                          newRanges[idx].min = parseInt(e.currentTarget.value) || 0;
+                          newRanges[idx].min = parseInt((e.target as HTMLInputElement).value) || 0;
                           setMappingConfig({...mappingConfig, stockRanges: newRanges});
                         }}
                         class="h-6 w-12 px-1 text-center bg-background"
@@ -341,18 +341,18 @@ export default function MarketplaceDashboard(
                       <Input
                         type="number"
                         value={range.max}
-                        onInput={(e) => {
+                        onChange={(e) => {
                           const newRanges = [...mappingConfig.stockRanges];
-                          newRanges[idx].max = parseInt(e.currentTarget.value) || 0;
+                          newRanges[idx].max = parseInt((e.target as HTMLInputElement).value) || 0;
                           setMappingConfig({...mappingConfig, stockRanges: newRanges});
                         }}
                         class="h-6 w-14 px-1 text-center bg-background"
                       />
                       <Input
                         value={range.status}
-                        onInput={(e) => {
+                        onChange={(e) => {
                           const newRanges = [...mappingConfig.stockRanges];
-                          newRanges[idx].status = e.currentTarget.value;
+                          newRanges[idx].status = (e.target as HTMLInputElement).value;
                           setMappingConfig({...mappingConfig, stockRanges: newRanges});
                         }}
                         class="h-6 flex-1 px-2 font-bold uppercase bg-background"
@@ -396,11 +396,11 @@ export default function MarketplaceDashboard(
 
       {/* VS Code style File Tabs */}
       {files.length > 0 && (
-        <div class="space-y-4">
-          <div class="flex items-center gap-0 overflow-x-auto pb-0 border-b border-border/60 scrollbar-hide no-scrollbar">
+        <div class="space-y-4 animate-in fade-in duration-500">
+          <div class="flex items-center gap-0 overflow-x-auto pb-0 border-b border-border/60 no-scrollbar overflow-y-hidden">
             <button
               onClick={() => setActiveFileId("all")}
-              class={`flex items-center gap-3 px-6 py-3 text-xs font-black uppercase tracking-widest whitespace-nowrap transition-all border-b-2 -mb-[2px] ${
+              class={`flex items-center gap-3 px-6 py-3 text-[11px] font-semibold uppercase tracking-wider whitespace-nowrap transition-all border-b-2 -mb-[2px] ${
                 activeFileId === "all"
                   ? "border-primary bg-muted/40 text-foreground"
                   : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/20"
@@ -408,24 +408,24 @@ export default function MarketplaceDashboard(
             >
               <Layers size={14} />
               Wszystkie pliki
-              <Badge variant="secondary" class="ml-1 h-4 px-1 text-[9px] font-bold">{files.length}</Badge>
+              <Badge variant="secondary" class="ml-1 h-4 px-1 text-[9px] font-medium">{files.length}</Badge>
             </button>
             {files.map((file) => (
               <div
                 key={file.id}
                 class={`flex items-center group transition-all border-b-2 -mb-[2px] ${
                   activeFileId === file.id
-                    ? "border-primary bg-card text-foreground shadow-[inset_0_1px_0_0_rgba(var(--primary),0.1)]"
+                    ? "border-primary bg-card text-foreground"
                     : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/20"
                 }`}
               >
                 <button
                   onClick={() => setActiveFileId(file.id)}
-                  class="flex items-center gap-2.5 px-6 py-3 text-xs font-bold whitespace-nowrap"
+                  class="flex items-center gap-2.5 px-6 py-3 text-[11px] font-medium whitespace-nowrap"
                 >
-                  <FileJson size={14} class={activeFileId === file.id ? "text-primary" : "text-muted-foreground/50"} />
+                  <FileJson size={14} class={activeFileId === file.id ? "text-primary" : "text-muted-foreground/40"} />
                   {file.name}
-                  <Badge variant="outline" class="ml-1 h-4 px-1 text-[9px] font-bold border-muted-foreground/30 opacity-60">
+                  <Badge variant="outline" class="ml-1 h-4 px-1 text-[9px] font-medium border-muted-foreground/30 opacity-60">
                     {file.data.length}
                   </Badge>
                 </button>
@@ -447,8 +447,8 @@ export default function MarketplaceDashboard(
                   <ShoppingBag size={24} />
                 </div>
                 <div>
-                  <p class="text-[11px] font-black text-muted-foreground uppercase tracking-[0.1em] mb-1">Suma produktów</p>
-                  <p class="text-3xl font-black tabular-nums tracking-tighter">{allData.length}</p>
+                  <p class="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-1">Suma produktów</p>
+                  <p class="text-3xl font-bold tabular-nums tracking-tighter">{allData.length}</p>
                 </div>
               </CardContent>
             </Card>
@@ -458,8 +458,8 @@ export default function MarketplaceDashboard(
                   <Check size={24} />
                 </div>
                 <div>
-                  <p class="text-[11px] font-black text-muted-foreground uppercase tracking-[0.1em] mb-1">Prawidłowe tytuły</p>
-                  <p class="text-3xl font-black text-emerald-600 tabular-nums tracking-tighter">
+                  <p class="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-1">Prawidłowe tytuły</p>
+                  <p class="text-3xl font-bold text-emerald-600 tabular-nums tracking-tighter">
                     {allData.filter(p => p.isTitleValid).length}
                   </p>
                 </div>
@@ -471,8 +471,8 @@ export default function MarketplaceDashboard(
                   <ArrowUpRight size={24} />
                 </div>
                 <div>
-                  <p class="text-[11px] font-black text-muted-foreground uppercase tracking-[0.1em] mb-1">Do poprawy</p>
-                  <p class="text-3xl font-black text-amber-600 tabular-nums tracking-tighter">
+                  <p class="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-1">Do poprawy</p>
+                  <p class="text-3xl font-bold text-amber-600 tabular-nums tracking-tighter">
                     {allData.filter(p => !p.isTitleValid).length}
                   </p>
                 </div>
@@ -484,9 +484,9 @@ export default function MarketplaceDashboard(
                   <ChevronRight size={24} />
                 </div>
                 <div>
-                  <p class="text-[11px] font-black text-muted-foreground uppercase tracking-[0.1em] mb-1">Średnia cena</p>
-                  <p class="text-3xl font-black tabular-nums tracking-tighter whitespace-nowrap">
-                    {(allData.reduce((acc, p) => acc + p.normalizedPrice, 0) / (allData.length || 1)).toFixed(2)} <span class="text-sm font-black">PLN</span>
+                  <p class="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-1">Średnia cena</p>
+                  <p class="text-3xl font-bold tabular-nums tracking-tighter whitespace-nowrap">
+                    {(allData.reduce((acc, p) => acc + p.normalizedPrice, 0) / (allData.length || 1)).toFixed(2)} <span class="text-sm font-semibold">PLN</span>
                   </p>
                 </div>
               </CardContent>
@@ -494,7 +494,7 @@ export default function MarketplaceDashboard(
           </div>
 
           {/* Table Control */}
-          <div class="flex flex-col sm:flex-row gap-4 justify-between items-center bg-muted/20 p-4 rounded-2xl border border-border/50 backdrop-blur-sm">
+          <div class="flex flex-col sm:flex-row gap-4 justify-between items-center bg-muted/20 p-3 rounded-2xl border border-border/40 backdrop-blur-sm">
             <div class="relative w-full sm:max-w-md">
               <Search class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
               <Input
@@ -517,62 +517,62 @@ export default function MarketplaceDashboard(
 
           {/* Results Table */}
           <div class="rounded-3xl border border-border/60 bg-card shadow-xl overflow-hidden">
-            <Table>
+            <Table class="border-collapse">
               <TableHeader>
-                <TableRow class="hover:bg-transparent bg-muted/10">
-                  <TableHead class="py-5 pl-8 text-[11px] font-black uppercase tracking-[0.2em]">Produkt & SKU</TableHead>
-                  <TableHead class="py-5 text-[11px] font-black uppercase tracking-[0.2em]">Atrybuty</TableHead>
-                  <TableHead class="py-5 text-[11px] font-black uppercase tracking-[0.2em]">Optymalizacja Allegro</TableHead>
-                  <TableHead class="py-5 pr-8 text-right text-[11px] font-black uppercase tracking-[0.2em]">Cena & Stan</TableHead>
+                <TableRow class="hover:bg-transparent bg-muted/10 border-b-border/40">
+                  <TableHead class="py-4 pl-8 text-[10px] font-bold uppercase tracking-widest">Produkt & SKU</TableHead>
+                  <TableHead class="py-4 text-[10px] font-bold uppercase tracking-widest">Atrybuty</TableHead>
+                  <TableHead class="py-4 text-[10px] font-bold uppercase tracking-widest">Optymalizacja Allegro</TableHead>
+                  <TableHead class="py-4 pr-8 text-right text-[10px] font-bold uppercase tracking-widest">Cena & Stan</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredData.map((p, idx) => (
-                  <TableRow key={`${p.SKU}-${idx}`} class="group hover:bg-muted/5">
-                    <TableCell class="py-7 pl-8 align-top">
-                      <div class="font-extrabold text-sm leading-tight mb-2 group-hover:text-primary transition-colors duration-300">{p["NAZWA ORG"]}</div>
+                  <TableRow key={`${p.SKU}-${idx}`} class="group hover:bg-muted/30">
+                    <TableCell class="py-6 pl-8 align-top">
+                      <div class="font-bold text-[13px] leading-tight mb-2 transition-colors duration-300">{p["NAZWA ORG"]}</div>
                       <div class="flex items-center gap-3">
-                        <span class="text-[10px] font-mono bg-muted/80 px-2 py-0.5 rounded text-muted-foreground font-black border border-border/30">
+                        <span class="text-[10px] font-mono bg-muted/80 px-1.5 py-0.5 rounded text-muted-foreground font-semibold border border-border/30">
                           {p.SKU}
                         </span>
-                        {p.EAN && <span class="text-[10px] font-mono text-muted-foreground/50 italic font-bold">EAN: {p.EAN}</span>}
+                        {p.EAN && <span class="text-[10px] font-mono text-muted-foreground/50 font-medium">EAN: {p.EAN}</span>}
                       </div>
                     </TableCell>
-                    <TableCell class="py-7 align-top">
-                      <div class="space-y-3">
-                        <div class="flex items-center gap-4">
-                          <span class="text-[9px] text-muted-foreground uppercase font-black tracking-widest w-12 opacity-60">Wymiar</span>
-                          <Badge variant="outline" class="text-[10px] font-mono py-0 border-muted-foreground/30 bg-background">{p.cleanedDimensions}</Badge>
+                    <TableCell class="py-6 align-top">
+                      <div class="space-y-2">
+                        <div class="flex items-center gap-3">
+                          <span class="text-[9px] text-muted-foreground uppercase font-bold tracking-widest w-12 opacity-60">Wymiar</span>
+                          <span class="text-[10px] font-mono font-medium">{p.cleanedDimensions}</span>
                         </div>
-                        <div class="flex items-center gap-4">
-                          <span class="text-[9px] text-muted-foreground uppercase font-black tracking-widest w-12 opacity-60">Kolor</span>
-                          <Badge variant="secondary" class="text-[10px] font-black py-0 shadow-sm border border-border/20">{p.cleanedColor}</Badge>
+                        <div class="flex items-center gap-3">
+                          <span class="text-[9px] text-muted-foreground uppercase font-bold tracking-widest w-12 opacity-60">Kolor</span>
+                          <Badge variant="outline" class="text-[10px] font-medium py-0 px-1.5 border-border/50">{p.cleanedColor}</Badge>
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell class="py-7 align-top max-w-sm lg:max-w-md">
-                      <div class="flex items-center justify-between mb-3 gap-6">
-                        <div class="text-sm font-black text-primary leading-tight tracking-tight">{p.allegroTitle}</div>
+                    <TableCell class="py-6 align-top max-w-sm lg:max-w-md">
+                      <div class="flex items-center justify-between mb-2.5 gap-6">
+                        <div class="text-sm font-semibold text-foreground leading-tight tracking-tight">{p.allegroTitle}</div>
                         <Badge
                           variant={p.isTitleValid ? "secondary" : "destructive"}
-                          class={`text-[10px] h-5.5 px-2 font-black shrink-0 border shadow-sm ${p.isTitleValid ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" : ""}`}
+                          class={`text-[10px] h-5 px-1.5 font-bold shrink-0 border ${p.isTitleValid ? "bg-emerald-500/5 text-emerald-600 border-emerald-500/20" : ""}`}
                         >
                           {p.titleLength}/75
                         </Badge>
                       </div>
                       <div class="relative">
-                        <p class="text-[11px] text-muted-foreground line-clamp-2 leading-relaxed pl-4 border-l-2 border-primary/20 italic font-bold opacity-80">
+                        <p class="text-[11px] text-muted-foreground line-clamp-2 leading-relaxed pl-3 border-l-2 border-primary/10 font-medium italic">
                           {p.cleanedDescription}
                         </p>
                       </div>
                     </TableCell>
-                    <TableCell class="py-7 pr-8 align-top text-right">
-                      <div class="text-2xl font-black tabular-nums tracking-tighter mb-1.5">
+                    <TableCell class="py-6 pr-8 align-top text-right">
+                      <div class="text-xl font-bold tabular-nums tracking-tighter mb-1.5">
                         {p.normalizedPrice.toFixed(2)}
-                        <span class="text-xs font-bold ml-1.5 text-muted-foreground uppercase">{p.currency}</span>
+                        <span class="text-[10px] font-semibold ml-1 text-muted-foreground uppercase">{p.currency}</span>
                       </div>
-                      <div class={`text-[10px] font-black uppercase tracking-[0.2em] px-2 py-1 rounded-md inline-block ${
-                        p.mappedStock === 0 ? "text-destructive bg-destructive/5" : "text-emerald-600 bg-emerald-500/5"
+                      <div class={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded border ${
+                        p.mappedStock === 0 ? "text-destructive bg-destructive/5 border-destructive/20" : "text-emerald-600 bg-emerald-500/5 border-emerald-500/20"
                       }`}>
                         {p.stockStatus}: {p.mappedStock}
                       </div>
@@ -625,15 +625,15 @@ export default function MarketplaceDashboard(
       {/* Corporate Footer */}
       <footer class="pt-14 pb-12 border-t border-border/40 flex flex-col md:flex-row items-center justify-between gap-8 opacity-70">
         <div class="flex items-center gap-4">
-          <div class="w-6 h-6 bg-primary rounded-lg shadow-sm" />
-          <p class="text-xs font-black uppercase tracking-[0.4em] text-foreground">
+          <div class="w-5 h-5 bg-primary rounded shadow-sm" />
+          <p class="text-[10px] font-bold uppercase tracking-[0.3em] text-foreground/80">
             Marketplace Fixer Professional
           </p>
         </div>
-        <div class="flex items-center gap-12 text-[10px] font-black uppercase tracking-[0.2em]">
+        <div class="flex items-center gap-10 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
           <span class="hover:text-primary cursor-default transition-colors">Enterprise Systems</span>
-          <span class="hover:text-primary cursor-default transition-colors">Data Privacy Compliance</span>
-          <span class="text-muted-foreground/30">v2.8.0 Stable</span>
+          <span class="hover:text-primary cursor-default transition-colors">Data Privacy</span>
+          <span class="">v2.8.0 Stable</span>
         </div>
       </footer>
     </div>
