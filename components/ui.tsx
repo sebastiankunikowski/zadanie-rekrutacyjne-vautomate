@@ -20,24 +20,24 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     ref,
   ) => {
     const baseStyles =
-      "inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background cursor-pointer";
+      "inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 cursor-pointer";
 
     const variants = {
-      default: "bg-primary text-primary-foreground hover:bg-primary/90",
+      default: "bg-primary text-primary-foreground shadow hover:bg-primary/90",
       destructive:
-        "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+        "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90",
       outline:
-        "border border-input hover:bg-accent hover:text-accent-foreground",
-      secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+        "border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground",
+      secondary: "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80",
       ghost: "hover:bg-accent hover:text-accent-foreground",
-      link: "underline-offset-4 hover:underline text-primary",
+      link: "text-primary underline-offset-4 hover:underline",
     };
 
     const sizes = {
-      default: "h-10 py-2 px-4",
-      sm: "h-9 px-3 rounded-md",
-      lg: "h-11 px-8 rounded-md",
-      icon: "h-10 w-10",
+      default: "h-9 px-4 py-2",
+      sm: "h-8 rounded-md px-3 text-xs",
+      lg: "h-10 rounded-md px-8",
+      icon: "h-9 w-9",
     };
 
     const combinedStyles = `${baseStyles} ${variants[variant]} ${sizes[size]} ${
@@ -55,7 +55,7 @@ export const Card = (
   },
 ) => (
   <div
-    class={`rounded-xl border bg-card text-card-foreground shadow ${
+    class={`rounded-xl border bg-card text-card-foreground shadow-sm ${
       className || ""
     }`}
   >
@@ -114,7 +114,7 @@ export const CardContent = (
 export const Input = ({ class: className, ...props }: JSX.HTMLAttributes<HTMLInputElement>) => (
   <input
     {...props}
-    class={`flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${
+    class={`flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 ${
       className || ""
     }`}
   />
@@ -128,15 +128,15 @@ export const Badge = (
   },
 ) => {
   const variants = {
-    default: "bg-primary text-primary-foreground hover:bg-primary/80",
-    secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+    default: "bg-primary text-primary-foreground hover:bg-primary/80 border-transparent shadow",
+    secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80 border-transparent",
     destructive:
-      "bg-destructive text-destructive-foreground hover:bg-destructive/80",
-    outline: "text-foreground",
+      "bg-destructive text-destructive-foreground hover:bg-destructive/80 border-transparent shadow-sm",
+    outline: "text-foreground border-border",
   };
   return (
     <div
-      class={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 w-fit ${
+      class={`inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 w-fit ${
         variants[variant]
       } ${className || ""}`}
     >
@@ -144,3 +144,41 @@ export const Badge = (
     </div>
   );
 };
+
+export const Table = ({ children, class: className }: { children: ComponentChildren; class?: string }) => (
+  <div class="relative w-full overflow-auto">
+    <table class={`w-full caption-bottom text-sm ${className || ""}`}>
+      {children}
+    </table>
+  </div>
+);
+
+export const TableHeader = ({ children, class: className }: { children: ComponentChildren; class?: string }) => (
+  <thead class={`[&_tr]:border-b ${className || ""}`}>
+    {children}
+  </thead>
+);
+
+export const TableBody = ({ children, class: className }: { children: ComponentChildren; class?: string }) => (
+  <tbody class={`[&_tr:last-child]:border-0 ${className || ""}`}>
+    {children}
+  </tbody>
+);
+
+export const TableRow = ({ children, class: className }: { children: ComponentChildren; class?: string }) => (
+  <tr class={`border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted ${className || ""}`}>
+    {children}
+  </tr>
+);
+
+export const TableHead = ({ children, class: className }: { children: ComponentChildren; class?: string }) => (
+  <th class={`h-10 px-4 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0 ${className || ""}`}>
+    {children}
+  </th>
+);
+
+export const TableCell = ({ children, class: className }: { children: ComponentChildren; class?: string }) => (
+  <td class={`p-4 align-middle [&:has([role=checkbox])]:pr-0 ${className || ""}`}>
+    {children}
+  </td>
+);
