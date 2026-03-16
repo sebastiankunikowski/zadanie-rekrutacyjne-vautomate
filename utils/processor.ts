@@ -1,7 +1,7 @@
 /**
- * Marketplace AI-Fixer Processor
+ * Marketplace Fixer Processor
  *
- * This module cleans and standardizes "dirty" product data.
+ * This module cleans and standardizes product data for processing.
  */
 
 export interface Product {
@@ -18,7 +18,12 @@ export interface CleanedProduct extends Product {
   cleanedColor: string;
   cleanedDescription: string;
   allegroTitle: string;
+  titleLength: number;
+  isTitleValid: boolean;
   normalizedPrice: number;
+  currency: string;
+  mappedStock: number;
+  stockStatus: string;
 }
 
 /**
@@ -36,7 +41,6 @@ function normalizeColor(name: string): string {
   if (n.includes("niebieski")) return "Niebieski";
   if (n.includes("biały")) return "Biały";
 
-  // Try to find the color in the name if still ambiguous
   const colors = [
     "biały",
     "czarny",
@@ -57,63 +61,40 @@ function normalizeColor(name: string): string {
  * Normalizes dimensions to "Szerokość x Długość cm".
  */
 function normalizeDimensions(name: string, description: string): string {
-  // Try to find formats like 40*60, 40x60, 400x600, 40*060cm
   const combined = (name + " " + description).toLowerCase();
 
-  // Pattern 1: 040*060cm or 40*60cm
   const p1 = combined.match(/(\d{2,3})\s*[x*]\s*(\d{2,3})\s*cm/);
-  if (p1) {
-    const w = parseInt(p1[1]);
-    const l = parseInt(p1[2]);
-    return `${w} x ${l} cm`;
-  }
+  if (p1) return `${parseInt(p1[1])} x ${parseInt(p1[2])} cm`;
 
-  // Pattern 2: 400x600 mm (convert to cm)
   const p2 = combined.match(/(\d{3,4})\s*[x*]\s*(\d{3,4})\s*mm/);
-  if (p2) {
-    const w = Math.floor(parseInt(p2[1]) / 10);
-    const l = Math.floor(parseInt(p2[2]) / 10);
-    return `${w} x ${l} cm`;
-  }
+  if (p2) return `${Math.floor(parseInt(p2[1]) / 10)} x ${Math.floor(parseInt(p2[2]) / 10)} cm`;
 
-  // Pattern 3: just 40x60
   const p3 = combined.match(/(\d{2,3})\s*[x*]\s*(\d{2,3})/);
-  if (p3) {
-    const w = parseInt(p3[1]);
-    const l = parseInt(p3[2]);
-    return `${w} x ${l} cm`;
-  }
+  if (p3) return `${parseInt(p3[1])} x ${parseInt(p3[2])} cm`;
 
   return "brak danych";
 }
 
 /**
- * Cleans the description by removing HTML and parsing internal JSON.
+ * Cleans the description.
  */
 function cleanDescription(desc: string): string {
   if (!desc) return "";
-
   let text = desc;
 
-  // Try to parse as JSON
   if (desc.trim().startsWith("{")) {
     try {
       const parsed = JSON.parse(desc);
       if (parsed.sections) {
         text = parsed.sections
-          .flatMap((s: { items?: { content?: string }[] }) => s.items || [])
-          .map((i: { content?: string }) => i.content || "")
+          .flatMap((s: any) => s.items || [])
+          .map((i: any) => i.content || "")
           .join(" ");
       }
-    } catch {
-      // Not JSON or malformed
-    }
+    } catch { }
   }
 
-  // Remove HTML tags
   text = text.replace(/<[^>]*>?/gm, " ");
-
-  // Unescape common HTML entities
   text = text
     .replace(/&nbsp;/g, " ")
     .replace(/&amp;/g, "&")
@@ -121,8 +102,48 @@ function cleanDescription(desc: string): string {
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">");
 
-  // Clean up whitespace
   return text.trim().replace(/\s+/g, " ");
+}
+
+/**
+ * Maps stock values.
+ */
+function mapStock(stany: string | number): { count: number; status: string } {
+  if (typeof stany === "number") {
+    return {
+      count: stany,
+      status: stany > 10 ? "Wysoki" : stany > 0 ? "Niski" : "Brak",
+    };
+  }
+
+  const s = stany.toLowerCase();
+  if (s === "dużo") return { count: 50, status: "Wysoki" };
+  if (s === "średnio") return { count: 15, status: "Średni" };
+  if (s === "mało") return { count: 5, status: "Niski" };
+  if (s === "brak" || s === "0") return { count: 0, status: "Brak" };
+
+  const parsed = parseInt(s.replace(/[^\d]/g, ""));
+  if (!isNaN(parsed)) {
+    return mapStock(parsed);
+  }
+
+  return { count: 0, status: "Nieznany" };
+}
+
+/**
+ * Normalizes price and currency.
+ */
+function normalizePrice(priceStr: string): { price: number; currency: string } {
+  if (!priceStr) return { price: 0, currency: "PLN" };
+
+  const cleanPrice = priceStr.replace(",", ".").replace(/[^\d.]/g, "");
+  const price = parseFloat(cleanPrice) || 0;
+
+  let currency = "PLN";
+  if (priceStr.toUpperCase().includes("EUR")) currency = "EUR";
+  if (priceStr.toUpperCase().includes("USD")) currency = "USD";
+
+  return { price, currency };
 }
 
 /**
@@ -133,19 +154,17 @@ function generateAllegroTitle(
   color: string,
   dimensions: string,
 ): string {
-  // Format: Typ + Model + Kolor + Rozmiar + Wyjątkowa cecha
   const baseType = "Dywanik Łazienkowy";
   const model = "Belweder";
 
-  let title = `${baseType} ${model} ${color} ${dimensions}`;
+  // Optimization strategy: Type + Model + Feature + Color + Size
+  let title = `${baseType} ${model} Miękki ${color} ${dimensions}`;
 
   if (title.length > 75) {
-    // If too long, try shortening
     title = `${baseType} ${model} ${color} ${dimensions}`;
   }
 
-  // Add some sales punch if space allows
-  const hooks = ["Antypoślizgowy", "Chłonny", "Luksusowy", "Miękki"];
+  const hooks = ["Antypoślizgowy", "Chłonny", "Luksusowy", "Premium"];
   for (const hook of hooks) {
     if ((title + " " + hook).length <= 75) {
       title += " " + hook;
@@ -162,18 +181,10 @@ export function processProduct(p: Product): CleanedProduct {
   const cleanedColor = normalizeColor(p["NAZWA ORG"]);
   const cleanedDimensions = normalizeDimensions(p["NAZWA ORG"], p["Opis ofe"]);
   const cleanedDescription = cleanDescription(p["Opis ofe"]);
-  const allegroTitle = generateAllegroTitle(
-    p["NAZWA ORG"],
-    cleanedColor,
-    cleanedDimensions,
-  );
+  const allegroTitle = generateAllegroTitle(p["NAZWA ORG"], cleanedColor, cleanedDimensions);
 
-  // Price normalization
-  let normalizedPrice = 0;
-  if (p.Cena) {
-    const priceStr = p.Cena.replace(",", ".").replace(/[^\d.]/g, "");
-    normalizedPrice = parseFloat(priceStr) || 0;
-  }
+  const { count, status } = mapStock(p.Stany);
+  const { price, currency } = normalizePrice(p.Cena);
 
   return {
     ...p,
@@ -181,7 +192,12 @@ export function processProduct(p: Product): CleanedProduct {
     cleanedColor,
     cleanedDescription,
     allegroTitle,
-    normalizedPrice,
+    titleLength: allegroTitle.length,
+    isTitleValid: allegroTitle.length <= 75,
+    normalizedPrice: price,
+    currency,
+    mappedStock: count,
+    stockStatus: status,
   };
 }
 
