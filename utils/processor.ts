@@ -1,6 +1,6 @@
 /**
  * Marketplace AI-Fixer Processor
- * 
+ *
  * This module cleans and standardizes "dirty" product data.
  */
 
@@ -27,19 +27,29 @@ export interface CleanedProduct extends Product {
 function normalizeColor(name: string): string {
   const n = name.toLowerCase();
   if (n.includes("j. szary") || n.includes("jasnoszary")) return "Jasnoszary";
-  if (n.includes("c. szary") || n.includes("ciemnoszary") || n.includes("c_szary")) return "Ciemnoszary";
+  if (
+    n.includes("c. szary") || n.includes("ciemnoszary") || n.includes("c_szary")
+  ) return "Ciemnoszary";
   if (n.includes("beż")) return "Beżowy";
   if (n.includes("czarny") || n.includes("blk")) return "Czarny";
   if (n.includes("szary")) return "Szary";
   if (n.includes("niebieski")) return "Niebieski";
   if (n.includes("biały")) return "Biały";
-  
+
   // Try to find the color in the name if still ambiguous
-  const colors = ["biały", "czarny", "szary", "beżowy", "niebieski", "zielony", "czerwony"];
+  const colors = [
+    "biały",
+    "czarny",
+    "szary",
+    "beżowy",
+    "niebieski",
+    "zielony",
+    "czerwony",
+  ];
   for (const c of colors) {
     if (n.includes(c)) return c.charAt(0).toUpperCase() + c.slice(1);
   }
-  
+
   return name;
 }
 
@@ -49,7 +59,7 @@ function normalizeColor(name: string): string {
 function normalizeDimensions(name: string, description: string): string {
   // Try to find formats like 40*60, 40x60, 400x600, 40*060cm
   const combined = (name + " " + description).toLowerCase();
-  
+
   // Pattern 1: 040*060cm or 40*60cm
   const p1 = combined.match(/(\d{2,3})\s*[x*]\s*(\d{2,3})\s*cm/);
   if (p1) {
@@ -57,7 +67,7 @@ function normalizeDimensions(name: string, description: string): string {
     const l = parseInt(p1[2]);
     return `${w} x ${l} cm`;
   }
-  
+
   // Pattern 2: 400x600 mm (convert to cm)
   const p2 = combined.match(/(\d{3,4})\s*[x*]\s*(\d{3,4})\s*mm/);
   if (p2) {
@@ -82,27 +92,27 @@ function normalizeDimensions(name: string, description: string): string {
  */
 function cleanDescription(desc: string): string {
   if (!desc) return "";
-  
+
   let text = desc;
-  
+
   // Try to parse as JSON
   if (desc.trim().startsWith("{")) {
     try {
       const parsed = JSON.parse(desc);
       if (parsed.sections) {
         text = parsed.sections
-          .flatMap((s: any) => s.items || [])
-          .map((i: any) => i.content || "")
+          .flatMap((s: { items?: { content?: string }[] }) => s.items || [])
+          .map((i: { content?: string }) => i.content || "")
           .join(" ");
       }
     } catch {
       // Not JSON or malformed
     }
   }
-  
+
   // Remove HTML tags
   text = text.replace(/<[^>]*>?/gm, " ");
-  
+
   // Unescape common HTML entities
   text = text
     .replace(/&nbsp;/g, " ")
@@ -110,7 +120,7 @@ function cleanDescription(desc: string): string {
     .replace(/&quot;/g, '"')
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">");
-    
+
   // Clean up whitespace
   return text.trim().replace(/\s+/g, " ");
 }
@@ -118,18 +128,22 @@ function cleanDescription(desc: string): string {
 /**
  * Generates an Allegro-friendly sales title (max 75 chars).
  */
-function generateAllegroTitle(name: string, color: string, dimensions: string): string {
+function generateAllegroTitle(
+  _name: string,
+  color: string,
+  dimensions: string,
+): string {
   // Format: Typ + Model + Kolor + Rozmiar + Wyjątkowa cecha
   const baseType = "Dywanik Łazienkowy";
   const model = "Belweder";
-  
+
   let title = `${baseType} ${model} ${color} ${dimensions}`;
-  
+
   if (title.length > 75) {
     // If too long, try shortening
     title = `${baseType} ${model} ${color} ${dimensions}`;
   }
-  
+
   // Add some sales punch if space allows
   const hooks = ["Antypoślizgowy", "Chłonny", "Luksusowy", "Miękki"];
   for (const hook of hooks) {
@@ -137,7 +151,7 @@ function generateAllegroTitle(name: string, color: string, dimensions: string): 
       title += " " + hook;
     }
   }
-  
+
   return title.slice(0, 75).trim();
 }
 
@@ -148,8 +162,12 @@ export function processProduct(p: Product): CleanedProduct {
   const cleanedColor = normalizeColor(p["NAZWA ORG"]);
   const cleanedDimensions = normalizeDimensions(p["NAZWA ORG"], p["Opis ofe"]);
   const cleanedDescription = cleanDescription(p["Opis ofe"]);
-  const allegroTitle = generateAllegroTitle(p["NAZWA ORG"], cleanedColor, cleanedDimensions);
-  
+  const allegroTitle = generateAllegroTitle(
+    p["NAZWA ORG"],
+    cleanedColor,
+    cleanedDimensions,
+  );
+
   // Price normalization
   let normalizedPrice = 0;
   if (p.Cena) {
@@ -163,7 +181,7 @@ export function processProduct(p: Product): CleanedProduct {
     cleanedColor,
     cleanedDescription,
     allegroTitle,
-    normalizedPrice
+    normalizedPrice,
   };
 }
 
